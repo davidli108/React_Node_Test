@@ -64,5 +64,5 @@ This project uses the following technologies:
    npm start
 
 ### Author
-  Name: David Li
-  Contact: davidjli.dev@gmail.com
+  - Name: David Li
+  - Contact: davidjli.dev@gmail.com
