@@ -11,6 +11,7 @@ import { getApi } from "services/api";
 import { DeleteIcon } from "@chakra-ui/icons";
 import { deleteApi } from "services/api";
 import CommonDeleteModel from "components/commonDeleteModel";
+import { toast } from 'react-toastify';
 import { FaFilePdf } from "react-icons/fa";
 import html2pdf from "html2pdf.js";
 const View = () => {
@@ -18,7 +19,7 @@ const View = () => {
     const param = useParams()
 
     const [data, setData] = useState()
-    const [deleteMany, setDeleteMany] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const user = JSON.parse(localStorage.getItem("user"))
     const [isLoding, setIsLoding] = useState(false)
     const [loading, setLoading] = useState(false)
@@ -63,16 +64,17 @@ const View = () => {
         }
     };
 
-    const handleDeleteMeeting = async (ids) => {
+    const handleDeleteMeeting = async () => {
         try {
             setIsLoding(true)
             let response = await deleteApi('api/meeting/delete/', params.id)
             if (response.status === 200) {
-                setDeleteMany(false)
+                setDeleteModalOpen(false)
                 navigate(-1)
+                toast.success(response.data.message);
             }
         } catch (error) {
-            console.log(error)
+            toast.error(error.message);
         }
         finally {
             setIsLoding(false)
@@ -121,7 +123,7 @@ const View = () => {
                                     </GridItem>
                                     <GridItem colSpan={{ base: 2, md: 1 }}>
                                         <Text fontSize="sm" fontWeight="bold" color={'blackAlpha.900'}> Created By </Text>
-                                        <Text>{data?.createdByName ? data?.createdByName : ' - '}</Text>
+                                        <Text>{data?.createBy ? data?.createBy.username : ' - '}</Text>
                                     </GridItem>
 
                                     <GridItem colSpan={{ base: 2, md: 1 }}>
@@ -145,7 +147,7 @@ const View = () => {
                                         {data?.related === 'Contact' && contactAccess?.view ? data?.attendes && data?.attendes.map((item) => {
                                             return (
                                                 <Link to={`/contactView/${item._id}`}>
-                                                    <Text color='brand.600' sx={{ '&:hover': { color: 'blue.500', textDecoration: 'underline' } }}>{item.firstName + ' ' + item.lastName}</Text>
+                                                    <Text color='brand.600' sx={{ '&:hover': { color: 'blue.500', textDecoration: 'underline' } }}>{item.fullName}</Text>
                                                 </Link>
                                             )
                                         }) : data?.related === 'Lead' && leadAccess?.view ? data?.attendesLead && data?.attendesLead.map((item) => {
@@ -156,7 +158,7 @@ const View = () => {
                                             )
                                         }) : data?.related === 'contact' ? data?.attendes && data?.attendes.map((item) => {
                                             return (
-                                                <Text color='blackAlpha.900' >{item.firstName + ' ' + item.lastName}</Text>
+                                                <Text color='blackAlpha.900' >{item.fullName}</Text>
                                             )
                                         }) : data?.related === 'lead' ? data?.attendesLead && data?.attendesLead.map((item) => {
                                             return (
@@ -176,7 +178,7 @@ const View = () => {
                         <Grid templateColumns="repeat(6, 1fr)" gap={1}>
                             <GridItem colStart={6} >
                                 <Flex justifyContent={"right"}>
-                                    {(user.role === 'superAdmin' || permission?.delete) ? <Button size='sm' style={{ background: 'red.800' }} onClick={() => setDeleteMany(true)} leftIcon={<DeleteIcon />} colorScheme="red" >Delete</Button> : ''}
+                                    {(user.role === 'superAdmin' || permission?.delete) ? <Button size='sm' style={{ background: 'red.800' }} onClick={() => setDeleteModalOpen(true)} leftIcon={<DeleteIcon />} colorScheme="red" >Delete</Button> : ''}
                                 </Flex>
                             </GridItem>
                         </Grid>
@@ -185,7 +187,7 @@ const View = () => {
 
                 </>}
             {/* Delete model */}
-            <CommonDeleteModel isOpen={deleteMany} onClose={() => setDeleteMany(false)} type='Meetings' handleDeleteData={handleDeleteMeeting} ids={params.id} />
+            <CommonDeleteModel isOpen={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} type='Meetings' handleDeleteData={handleDeleteMeeting} ids={params.id} />
         </>
     );
 };

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { DeleteIcon, ViewIcon } from '@chakra-ui/icons';
 import { Button, Menu, MenuButton, MenuItem, MenuList, Text, useDisclosure } from '@chakra-ui/react';
-import { getApi } from 'services/api';
 import { HasAccess } from '../../../redux/accessUtils';
 import CommonCheckTable from '../../../components/reactTable/checktable';
 import { SearchIcon } from "@chakra-ui/icons";
@@ -24,7 +23,6 @@ const Index = () => {
     const [advanceSearch, setAdvanceSearch] = useState(false);
     const [getTagValuesOutSide, setGetTagValuesOutside] = useState([]);
     const [searchboxOutside, setSearchboxOutside] = useState('');
-    const user = JSON.parse(localStorage.getItem("user"));
     const [deleteMany, setDeleteMany] = useState(false);
     const [isLoding, setIsLoding] = useState(false);
     const [data, setData] = useState([]);
@@ -72,7 +70,9 @@ const Index = () => {
         },
         { Header: "Date & Time", accessor: "dateTime", },
         { Header: "Time Stamp", accessor: "timestamp", },
-        { Header: "Create By", accessor: "createdByName", },
+        { Header: "Create By", accessor: "createBy", cell: (cell) => (
+            <p>{cell?.value.username}</p>
+        ) },
         ...(permission?.update || permission?.view || permission?.delete ? [actionHeader] : [])
 
     ];
@@ -99,6 +99,7 @@ const Index = () => {
             }
         } catch (error) {
             console.log(error)
+            toast.error(error.message);
         }
         finally {
             setIsLoding(false)
@@ -158,7 +159,7 @@ const Index = () => {
                 setGetTagValues={setGetTagValuesOutside}
                 setSearchbox={setSearchboxOutside}
             />
-            <AddMeeting setAction={setAction} isOpen={isOpen} onClose={onClose} />
+            <AddMeeting fetchData = {fetchData} isOpen={isOpen} onClose={onClose} />
 
             {/* Delete model */}
             <CommonDeleteModel isOpen={deleteMany} onClose={() => setDeleteMany(false)} type='Meetings' handleDeleteData={handleDeleteMeeting} ids={selectedValues} />

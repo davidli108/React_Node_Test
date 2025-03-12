@@ -543,8 +543,8 @@ const CommonCheckTable = (props) => {
                         <ModalCloseButton onClick={() => { setManageColumnsModel(false); }} />
                         <ModalBody>
                             <div>
-                                {columnData?.map((column) => (
-                                    <Text display={"flex"} key={column?.accessor} py={2}>
+                                {columnData?.map((column, id) => (
+                                    <Text index = {'id:'+ id} display={"flex"} key={column?.accessor} py={2}>
                                         <Checkbox
                                             defaultChecked={columns?.some((item) => item?.accessor === column?.accessor)}
                                             onChange={() => toggleColumnVisibility(column?.accessor)}

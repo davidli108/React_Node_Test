@@ -173,22 +173,8 @@ export default function ContactTable(props) {
                           {cell?.value}
                         </Text>
                       );
-                    } else if (cell?.column.Header === "first Name") {
-                      data = (
-                        // <Link to={`/contactView/${cell?.row?.original._id}`}>
-                        <Text
-                          me="10px"
-                          // sx={{ '&:hover': { color: 'blue.500', textDecoration: 'underline' } }}
-                          color={textColor}
-                          fontSize="sm"
-                          fontWeight="700"
-                        >
-                          {cell?.value}
-                        </Text>
-                        // </Link>
-                      );
-                    } else if (cell?.column.Header === "last Name") {
-                      data = (
+                    } else if (cell?.column.Header === "full Name") {
+                      data = ( 
                         <Text
                           me="10px"
                           color={textColor}
@@ -196,7 +182,7 @@ export default function ContactTable(props) {
                           fontWeight="700"
                         >
                           {cell?.value}
-                        </Text>
+                        </Text> 
                       );
                     } else if (cell?.column.Header === "phone Number") {
                       data = (

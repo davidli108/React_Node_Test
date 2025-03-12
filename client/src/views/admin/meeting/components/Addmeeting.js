@@ -7,26 +7,19 @@ import dayjs from 'dayjs';
 import { useFormik } from 'formik';
 import { useEffect, useState } from 'react';
 import { LiaMousePointerSolid } from 'react-icons/lia';
-import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { MeetingSchema } from 'schema';
-import { getApi, postApi } from 'services/api';
+import { getApi, postApi, putApi } from 'services/api';
 
 const AddMeeting = (props) => {
-    const { onClose, isOpen, setAction, from, fetchData, view } = props
-    const [leaddata, setLeadData] = useState([])
-    const [contactdata, setContactData] = useState([])
-    const [isLoding, setIsLoding] = useState(false)
+    const { onClose, isOpen, fetchData, id} = props;
+    const [leaddata, setLeadData] = useState([]);
+    const [contactdata, setContactData] = useState([]);
+    const [isLoding, setIsLoding] = useState(false);
     const [contactModelOpen, setContactModel] = useState(false);
     const [leadModelOpen, setLeadModel] = useState(false);
     const todayTime = new Date().toISOString().split('.')[0];
-    const leadData = useSelector((state) => state?.leadData?.data);
-
-
-    const user = JSON.parse(localStorage.getItem('user'))
-
-    const contactList = useSelector((state) => state?.contactData?.data)
-
+    const user = JSON.parse(localStorage.getItem('user'));
 
     const initialValues = {
         agenda: '',
@@ -37,49 +30,81 @@ const AddMeeting = (props) => {
         dateTime: '',
         notes: '',
         createBy: user?._id,
-    }
+    };
 
     const formik = useFormik({
         initialValues: initialValues,
         validationSchema: MeetingSchema,
-        onSubmit: (values, { resetForm }) => {
-            
+        onSubmit: (values ) => {
+            AddData(values);
         },
     });
-    const { errors, touched, values, handleBlur, handleChange, handleSubmit, setFieldValue } = formik
+
+    const { errors, touched, values, handleBlur, handleChange, handleSubmit, setFieldValue } = formik;
 
     const AddData = async () => {
-
+        try {
+            setIsLoding(true);
+            let response = await postApi('api/meeting/add', values);
+            if (response.status === 201) {
+                toast.success(response.data.message);
+                handleClose();
+                fetchData(); 
+            }
+        } catch (error) {
+            toast.error( error.message );
+        } finally {
+            setIsLoding(false);
+        }
     };
 
     const fetchAllData = async () => {
-        
-    }
+        try {
+            setIsLoding(true);
+            if (values.related === "Contact") {
+                const result = await getApi(user.role === 'superAdmin' ? 'api/contact/' : `api/contact/?createBy=${user._id}`);
+                setContactData(result?.data);
+            } else if (values.related === "Lead") {
+                const result = await getApi(user.role === 'superAdmin' ? 'api/lead/' : `api/lead/?createBy=${user._id}`);
+                setLeadData(result?.data);
+            }
+        } catch (error) {
+            toast.error(`Error fetching ${values.related} data: ${error.message}`);
+        } finally {
+            setIsLoding(false);
+        }
+    };
 
     useEffect(() => {
+        if (values.related) {
+            fetchAllData();
+        }
+    }, [values.related]);
 
-    }, [props.id, values.related])
 
     const extractLabels = (selectedItems) => {
         return selectedItems.map((item) => item._id);
     };
 
+    const handleClose = () => {
+        formik.resetForm();
+        onClose();
+    };
+
     const countriesWithEmailAsLabel = (values.related === "Contact" ? contactdata : leaddata)?.map((item) => ({
         ...item,
         value: item._id,
-        label: values.related === "Contact" ? `${item.firstName} ${item.lastName}` : item.leadName,
+        label: values.related === "Contact" ? item.fullName : item.leadName,
     }));
 
     return (
-        <Modal onClose={onClose} isOpen={isOpen} isCentered>
+        <Modal onClose={handleClose} isOpen={isOpen} isCentered>
             <ModalOverlay />
             <ModalContent height={"580px"}>
-                <ModalHeader>Add Meeting </ModalHeader>
+                <ModalHeader>Add Meeting</ModalHeader>
                 <ModalCloseButton />
                 <ModalBody overflowY={"auto"} height={"400px"}>
-                    {/* Contact Model  */}
                     <MultiContactModel data={contactdata} isOpen={contactModelOpen} onClose={setContactModel} fieldName='attendes' setFieldValue={setFieldValue} />
-                    {/* Lead Model  */}
                     <MultiLeadModel data={leaddata} isOpen={leadModelOpen} onClose={setLeadModel} fieldName='attendesLead' setFieldValue={setFieldValue} />
 
                     <Grid templateColumns="repeat(12, 1fr)" gap={3}>
@@ -112,7 +137,6 @@ const AddMeeting = (props) => {
                             <Text mb='10px' color={'red'} fontSize='sm'> {errors.related && touched.related && errors.related}</Text>
                         </GridItem>
                         {(values.related === "Contact" ? (contactdata?.length ?? 0) > 0 : (leaddata?.length ?? 0) > 0) && values.related &&
-
                             <GridItem colSpan={{ base: 12 }}>
                                 <Flex alignItems={'end'} justifyContent={'space-between'} >
                                     <Text w={'100%'} >
@@ -182,25 +206,18 @@ const AddMeeting = (props) => {
                             />
                             <Text mb='10px' color={'red'}> {errors.notes && touched.notes && errors.notes}</Text>
                         </GridItem>
-
                     </Grid>
-
-
                 </ModalBody>
                 <ModalFooter>
-                    <Button size="sm" variant='brand' me={2} disabled={isLoding ? true : false} onClick={handleSubmit}>{isLoding ? <Spinner /> : 'Save'}</Button>
+                   <Button size="sm" variant='brand' me={2} disabled={isLoding ? true : false} onClick={handleSubmit}>{isLoding ? <Spinner /> :  "Save" }</Button>
                     <Button sx={{
                         textTransform: "capitalize",
                     }} variant="outline"
-                        colorScheme="red" size="sm" onClick={() => {
-                            formik.resetForm()
-                            onClose()
-                        }}>Close</Button>
+                        colorScheme="red" size="sm" onClick={handleClose}>Close</Button>
                 </ModalFooter>
             </ModalContent>
         </Modal>
-    )
-}
+    );
+};
 
-export default AddMeeting
-
+export default AddMeeting;
